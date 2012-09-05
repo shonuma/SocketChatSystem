@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<title></title>
+<head>
+<meta http-equiv=Content-Type" content="text/html" charset="UTF-8">
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script type="text/javascript">
+
+var socket = io.connect("http://126.13.33.50:8080");
+var logs = "";
+//接続
+socket.on('connect', function() {
+	//socket.send({ cookie: document.cookie});
+	console.log('connect ok');
+	socket.emit("login","hoge");
+	$("#socket").html("接続完了しました");
+});
+
+//共有
+socket.on('message',function(ret){
+	var date = getNow();
+	if(logs == ""){
+		logs = date + " "+ ret;
+	}else{
+		logs = date + " " +ret + "<br>" + logs;
+	}
+	console.log(logs);
+	$("#log").html(logs);
+});
+
+$(window).ready(function(){
+	
+});
+
+$(window).keyup(function(e){
+  var _is_enter = e.keyCode;
+  if(_is_enter == 13 && document.getElementById("chat").value != ""){
+  	change();
+  }
+  return false;
+});
+
+function getNow(){
+	var Time = new Date();
+	var hour = Time.getHours();
+	var minute = Time.getMinutes();
+	
+	if(hour < 10){
+		hour = "0" + hour;
+	}
+	if(minute < 10){
+		minute = "0" + minute;
+	}
+	var ret = hour + ":" + minute;
+	return ret;
+}
+
+function change(){
+	var id = document.getElementById("name").value;
+	var sent = document.getElementById("chat").value;
+	if(sent == ""){
+		alert("文字列が空です");
+	}else{
+		sent = rewriter(sent);
+		console.log("sent was "+id + ":" +sent);
+		var msg = "message:" + "(" + id + ")" + sent;
+		$("#chat").val("");
+		socket.send(msg);
+	}
+}
+
+function rewriter(input){
+	var output = input;
+	if(output.match(/http:\/\/.*\.jpg/)){
+		output = "<img src=\"" + output + "\" width=200 height=200>";
+	}
+	return output;
+}
+
+$(window).bind("beforeunload",function(e){
+	console.log("close");
+});
+
+</script>
+</head>
+<body>
+<p>
+接続ステータス：<span id="socket" style="font-weight:bold;">接続中です...</span>
+</p>
+<div id="restart" style="display:inline;">
+	<form>
+	<input type="text" id="name" placeholder="ID" />
+	<input type="text" id="chat" placeholder="発言を入力"/>
+	<input type="button" onClick="change();" value="発言" />
+	</form>
+</div>
+<div style="width:800px;height:200px;background-color:#FDE;overflow:auto;">
+<p id = "log"></p>
+</body>
+</html>
